@@ -1,12 +1,103 @@
 from django.contrib import admin
+from django import forms
 from .models import MovieShots, Actor, Category, Genre, Movie, RaitingStar, Reviews, Raiting
+from django.utils.safestring import mark_safe
+from ckeditor_uploader.widgets import CKEditorUploadingWidget
 
-admin.site.register(Category)
-admin.site.register(Movie)
-admin.site.register(Actor)
-admin.site.register(Genre)
 
-admin.site.register(RaitingStar)
-admin.site.register(Raiting)
-admin.site.register(Reviews)
-admin.site.register(MovieShots)
+class MovieAdminForm(forms.ModelForm):
+    description = forms.CharField(label="Описание", widget=CKEditorUploadingWidget())
+    class Meta:
+        model = Movie
+        fields = '__all__'
+
+
+class ReviewInline(admin.TabularInline):
+    model = Reviews
+    extra = 1
+    readonly_fields = ("name", "email")
+
+
+class MovieShotsInLine(admin.TabularInline):
+    model = MovieShots
+    extra = 1
+    readonly_fields = ("get_image",)
+
+    def get_image(self, obj):
+        return mark_safe(f"<img src={obj.image.url} width='150' height='100'>")
+
+    get_image.short_description = "Изображение"
+
+@admin.register(Movie)
+class MovieAdmin(admin.ModelAdmin):
+    list_display = ("title", "category", "url", "draft")
+    list_filter = ("category", "year")
+    search_fields = ("title", "category__name")
+    inlines = [MovieShotsInLine, ReviewInline]
+    save_on_top = True  
+    save_as = True
+    form = MovieAdminForm
+    readonly_fields = ("get_image",)
+    list_editable = ("draft",)
+    #fields = (("actors", "directors", "genres"), )
+    fieldsets = (
+        (None, {
+            "fields": (("title", "tagline"), )
+        }),
+        (None, {
+            "fields": ("description", ("poster", "get_image"))
+        }),
+        (None, {
+            "fields": (("year", "world_primier", "country"), )
+        }),
+    )
+
+    def get_image(self, obj):
+        return mark_safe(f"<img src={obj.poster.url} width='300' height='300'>")
+
+    get_image.short_description = "Постер"
+
+
+@admin.register(Category)
+class CategoryAdmin(admin.ModelAdmin):
+    list_display = ("name", "url", "id")
+    list_display_links = ("name",)
+
+
+@admin.register(Reviews)
+class ReviewAdmin(admin.ModelAdmin):
+    list_display = ("name", "email", "parent", "movie", "id")
+    readonly_fields = ("name", "email")
+    
+
+@admin.register(Actor)
+class ActorAdmin(admin.ModelAdmin):
+    list_display = ("name", "age", "get_image")
+
+    def get_image(self, obj):
+        return mark_safe(f"<img src={obj.image.url} width='50' height='60'>")
+
+    get_image.short_description = "Изображение"
+
+
+@admin.register(Genre)
+class GenreAdmin(admin.ModelAdmin):
+    list_display = ("name", "description", "url")
+
+
+@admin.register(RaitingStar)
+class RaitingstarAdmin(admin.ModelAdmin):
+    list_display = ("value",)
+
+
+@admin.register(Raiting)
+class RaitingAdmin(admin.ModelAdmin):
+    list_display = ("ip", "star", "movie")
+
+
+@admin.register(MovieShots)
+class MovieshotsAdmin(admin.ModelAdmin):
+    list_display = ("title", "description", "image", "movie")
+
+admin.site.site_title = "Django Movies"
+admin.site.site_header = "Django Movies"
