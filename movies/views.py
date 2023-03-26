@@ -12,6 +12,10 @@ class MoviesView(ListView):
     #template_name = "movies/movies.html"
     #return render(request, "movies/movies.html", {"movie_list": movies})
 
+    #def get_context_data(self, *args, **kwargs):
+    #    context = super().get_context_data(*args, **kwargs)
+    #    context["categories"] = Category.objects.all()
+    #    return context
 
 class MovieDetailView(DetailView):
     """Description movie"""
@@ -31,3 +35,10 @@ class AddRewiew(View):
             form.movie = movie
             form.save()
         return redirect(movie.get_absolute_url())
+
+
+class ActorView(DetailView):
+    """Information about actor"""
+    model = Actor
+    template_name = 'movies/actor.html'
+    slug_field = 'name'
